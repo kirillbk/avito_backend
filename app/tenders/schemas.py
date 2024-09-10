@@ -1,4 +1,4 @@
-from app.tenders.models import tenderServiceTypeEnum, tenderStatusEnum
+from app.tenders.models import TenderServiceTypeEnum, TenderStatusEnum
 
 from pydantic import BaseModel, UUID4, Field
 
@@ -13,12 +13,12 @@ TenderVersion = Annotated[int, Field(ge=1)]
 class BaseTenderSchema(BaseModel):
     name: str = Field(max_length=100)
     description: str = Field(max_length=500)
-    serviceType: tenderServiceTypeEnum
-    status: tenderStatusEnum
+    serviceType: TenderServiceTypeEnum
     organizationId: UUID = Field(max_length=100)
 
 
 class TenderSchema(BaseTenderSchema):
+    status: TenderStatusEnum
     id: UUID = Field(max_length=100)
     version: TenderVersion
     createdAt: datetime
@@ -31,4 +31,4 @@ class NewTenderSchema(BaseTenderSchema):
 class EditTenderSchema(BaseModel):
     name: Optional[str] = Field(default=None, max_length=100)
     description: Optional[str] = Field(default=None, max_length=500)
-    serviceType: Optional[tenderServiceTypeEnum] = None
+    serviceType: Optional[TenderServiceTypeEnum] = None

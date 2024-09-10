@@ -1,5 +1,5 @@
 from app.tenders.schemas import TenderSchema, NewTenderSchema, TenderVersion, EditTenderSchema
-from app.tenders.models import tenderServiceTypeEnum, tenderStatusEnum
+from app.tenders.models import TenderServiceTypeEnum, TenderStatusEnum
 
 from fastapi import APIRouter
 
@@ -10,27 +10,27 @@ router = APIRouter(prefix="/tenders", tags=["tenders"])
 
 
 @router.get("")
-async def list_tenders(limit: int = 5, offset: int = 0, service_type: tenderServiceTypeEnum | None = None) -> list[TenderSchema]:
+async def list_tenders(limit: int = 5, offset: int = 0, service_type: TenderServiceTypeEnum | None = None) -> list[TenderSchema]:
     pass
 
 
 @router.post("/new")
-async def create_new_tender(new_tender: NewTenderSchema) -> TenderSchema:
+async def add_new_tender(new_tender: NewTenderSchema) -> TenderSchema:
     pass
 
 
 @router.get("/my")
-async def get_my_tenders(username: str, limit: int = 5, offset: int = 0) -> list[TenderSchema]:
+async def get_user_tenders(username: str, limit: int = 5, offset: int = 0) -> list[TenderSchema]:
     pass
 
 
 @router.get("/{tender_id}/status") 
-async def get_tender_status(tender_id: UUID, username: str) -> tenderStatusEnum:
+async def get_tender_status(tender_id: UUID, username: str) -> TenderStatusEnum:
     pass
 
 
 @router.put("/{tender_id}/status")
-async def put_tender_status(tender_id: UUID, status: tenderStatusEnum, username: str) -> TenderSchema:
+async def set_tender_status(tender_id: UUID, status: TenderStatusEnum, username: str) -> TenderSchema:
     pass
 
 
@@ -40,5 +40,5 @@ async def edit_tender(tender_id: UUID, username: str, tender_params: EditTenderS
 
 
 @router.put("/{tender_id}/rollback/{version}")
-async def rollback_tender(tender_id: UUID, version: TenderVersion, username: str) -> TenderSchema:
+async def tender_rollback(tender_id: UUID, version: TenderVersion, username: str) -> TenderSchema:
     pass

@@ -18,4 +18,4 @@ class Settings(BaseSettings):
     debug: bool = False
 
 
-settings = Settings() 
+config = Settings() 

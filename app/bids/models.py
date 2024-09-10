@@ -1,14 +1,12 @@
 import enum
 
 
-class bidStatusEnum(str, enum.Enum):
+class BidStatusEnum(str, enum.Enum):
     CREATED = "Created"
     PUBLISHED = "Published"
     CANCELED = "Canceled"
-    APPROVED = "Approved"
-    REJECTED = "Rejected"
 
 
-class authorTypeEnum(str, enum.Enum):
+class BidAuthorTypeEnum(str, enum.Enum):
     ORGANIZATION = "Organization"
     USER = "User"
