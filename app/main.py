@@ -1,8 +1,11 @@
+from app.tenders.router import router as tenders_router
+
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 
-app = FastAPI(title="Tender Management API")
 
+app = FastAPI(title="Tender Management API")
+app.include_router(tenders_router, prefix="/api")
 
 @app.get("/api/ping", response_class=PlainTextResponse)
 async def ping():
