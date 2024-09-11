@@ -5,7 +5,7 @@ from sqlalchemy.sql import func
 from sqlalchemy import String
 
 from uuid import UUID
-from datetime import date
+from datetime import datetime
 
 
 class Employee(Base):
@@ -15,5 +15,5 @@ class Employee(Base):
     username: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
     first_name: Mapped[str] = mapped_column(String(50))
     last_name: Mapped[str] = mapped_column(String(50))
-    created_at: Mapped[date] = mapped_column(server_default=func.current_timestamp())
-    updated_at:Mapped[date] = mapped_column(server_default=func.current_timestamp())
+    created_at: Mapped[datetime] = mapped_column(server_default=func.current_timestamp())
+    updated_at:Mapped[datetime] = mapped_column(server_default=func.current_timestamp())
