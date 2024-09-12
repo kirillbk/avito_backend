@@ -1,9 +1,10 @@
 from app.tenders.models import Tender, TenderInfo, TenderServiceTypeEnum
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
+from sqlalchemy import select
 
 from uuid import UUID
+from typing import Sequence
 
 
 async def add_tender(
@@ -24,3 +25,18 @@ async def add_tender(
         await session.commit()
 
     return new_tender
+
+
+async def get_tenders(
+    db: AsyncSession,
+    limit: int,
+    offset: int,
+    service_type: TenderServiceTypeEnum | None
+) -> Sequence[Tender]:
+    stmt = select(Tender).join(TenderInfo)
+    if service_type:
+        stmt = stmt.where(TenderInfo.serviceType == service_type)
+    stmt = stmt.limit(limit).offset(offset)
+
+    async with db as session:
+        return (await session.scalars(stmt)).all()

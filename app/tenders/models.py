@@ -44,7 +44,7 @@ class Tender(Base):
     status: Mapped[TenderStatusEnum] = mapped_column(Enum(TenderStatusEnum), default=TenderStatusEnum.CREATED)
     createdAt: Mapped[datetime] = mapped_column(server_default=func.current_timestamp())
     
-    _info: Mapped["TenderInfo"] = relationship() 
+    _info: Mapped["TenderInfo"] = relationship(lazy="joined") 
 
     @hybrid_property
     def name(self) -> str:
