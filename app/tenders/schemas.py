@@ -14,12 +14,12 @@ class BaseTenderSchema(BaseModel):
     name: str = Field(max_length=100)
     description: str = Field(max_length=500)
     serviceType: TenderServiceTypeEnum
-    organizationId: UUID = Field(max_length=100)
+    organizationId: UUID
 
 
 class TenderSchema(BaseTenderSchema):
+    id: UUID
     status: TenderStatusEnum
-    id: UUID = Field(max_length=100)
     version: TenderVersion
     createdAt: datetime
 

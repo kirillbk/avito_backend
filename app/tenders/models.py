@@ -1,8 +1,9 @@
 from app.database import Base
 
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from sqlalchemy import String, Enum, ForeignKey, CheckConstraint
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from uuid import UUID
 from datetime import datetime
@@ -21,31 +22,44 @@ class TenderStatusEnum(str, enum.Enum):
     CLOSED = "Closed"
 
 
-class Tender(Base):
-    __tablename__ = "tender"
-
-    id: Mapped[UUID] = mapped_column(server_default=func.gen_random_uuid(), primary_key=True)
-    # name*	tenderName[...]
-    # description*	tenderDescription[...]
-    # serviceType*
-    # version
-    organizationId: Mapped[UUID] = mapped_column(ForeignKey("organization.id", ondelete="CASCADE"), nullable=False)
-    creatorUsername: Mapped[str] = mapped_column(ForeignKey("employee.username", ondelete="CASCADE"), nullable=False)
-
-    status: Mapped[TenderStatusEnum] = mapped_column(Enum(TenderStatusEnum), default=TenderStatusEnum.CREATED)
-    createdAt: Mapped[datetime] = mapped_column(server_default=func.current_timestamp())
-
-
 class TenderInfo(Base):
     __tablename__ = "tender_info"
     
-    tender_id: Mapped[UUID] = mapped_column(ForeignKey("tender.id", ondelete="CASCADE"), primary_key=True)
-    version: Mapped[int] = mapped_column(server_default="1", primary_key=True) 
-    
+    id: Mapped[UUID] = mapped_column(server_default=func.gen_random_uuid(), primary_key=True)
+        
     name: Mapped[str] = mapped_column(String(100))
     description: Mapped[str] = mapped_column(String(500))
     serviceType: Mapped[TenderServiceTypeEnum] = mapped_column(Enum(TenderServiceTypeEnum), nullable=False)
 
+
+class Tender(Base):
+    __tablename__ = "tender"
+
+    id: Mapped[UUID] = mapped_column(server_default=func.gen_random_uuid(), primary_key=True)
+    organizationId: Mapped[UUID] = mapped_column(ForeignKey("organization.id", ondelete="CASCADE"), nullable=False)
+    creatorId: Mapped[str] = mapped_column(ForeignKey("employee.id", ondelete="CASCADE"), nullable=False)
+    info_id: Mapped[UUID] = mapped_column(ForeignKey("tender_info.id", ondelete="CASCADE"), nullable=False)
+
+    version: Mapped[int] = mapped_column(server_default="1")
+    status: Mapped[TenderStatusEnum] = mapped_column(Enum(TenderStatusEnum), default=TenderStatusEnum.CREATED)
+    createdAt: Mapped[datetime] = mapped_column(server_default=func.current_timestamp())
+    
+    _info: Mapped["TenderInfo"] = relationship() 
+
+    @hybrid_property
+    def name(self) -> str:
+        return self._info.name
+    
+    @hybrid_property
+    def description(self) -> str:
+        return self._info.description
+    
+    @hybrid_property
+    def serviceType(self) -> str:
+        return self._info.serviceType
+    
     __table_args__ = (
         CheckConstraint('version >= 1'),
     )
+
+
