@@ -24,7 +24,7 @@ class Organization(Base):
     description: Mapped[str] = mapped_column(Text())
     type: Mapped[OrganizationTypeEnum] = mapped_column(Enum(OrganizationTypeEnum), nullable=False)
     created_at: Mapped[datetime] = mapped_column(server_default=func.current_timestamp())
-    updated_at:Mapped[datetime] = mapped_column(server_default=func.current_timestamp())
+    updated_at: Mapped[datetime] = mapped_column(server_default=func.current_timestamp())
 
 
 class OrganizationResponsible(Base):

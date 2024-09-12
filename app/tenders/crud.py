@@ -1,4 +1,4 @@
-from app.tenders.models import Tender, TenderInfo, TenderServiceTypeEnum
+from app.tenders.models import Tender, TenderInfo, TenderServiceTypeEnum, TenderVersion
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -16,19 +16,23 @@ async def add_tender(
     serviceType: TenderServiceTypeEnum,
 ) -> Tender:
     async with db as session:
-        new_tender_info = TenderInfo(
+        tender_info = TenderInfo(
             name=name, description=description, serviceType=serviceType
         )
-        session.add(new_tender_info)
+        session.add(tender_info)
         await session.commit()
 
-        new_tender = Tender(
-            organizationId=organizationId, creatorId=creatorId, _info=new_tender_info
+        tender = Tender(
+            organizationId=organizationId, creatorId=creatorId, _info=tender_info
         )
-        session.add(new_tender)
+        session.add(tender)
         await session.commit()
 
-    return new_tender
+        tender_version = TenderVersion(tender_id=tender.id, tender_info_id=tender_info.id)
+        session.add(tender_version)
+        await session.commit()
+
+    return tender
 
 
 async def get_tenders_by_type(
@@ -54,3 +58,8 @@ async def get_tenders_by_user(
 
     async with db as session:
         return (await session.scalars(stmt)).all()
+
+
+async def get_tender(db: AsyncSession, tender_id: UUID) -> Tender:
+    async with db as session:
+        return await session.get(Tender, tender_id)
