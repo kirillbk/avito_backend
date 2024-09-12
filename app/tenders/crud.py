@@ -1,7 +1,7 @@
 from app.tenders.models import Tender, TenderVersion, TenderServiceTypeEnum, TenderInfo
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.orm import joinedload
 
 from uuid import UUID
@@ -77,7 +77,7 @@ async def update_tender(
     tender_id: UUID,
     name: str | None,
     description: str | None,
-    serviceType: TenderServiceTypeEnum | None
+    serviceType: TenderServiceTypeEnum | None,
 ) -> Tender:
     async with db as session:
         stmt = select(Tender).where(Tender.id == tender_id).with_for_update()
@@ -87,7 +87,7 @@ async def update_tender(
             name=name if name else old_tender_version.name,
             description=description if description else old_tender_version.description,
             serviceType=serviceType if serviceType else old_tender_version.serviceType,
-            version = old_tender_version.version + 1   
+            version=old_tender_version.version + 1,
         )
         session.add(new_tender_version)
         await session.commit()
@@ -95,7 +95,47 @@ async def update_tender(
         tender._version = new_tender_version
         await session.commit()
 
-        tender_info = TenderInfo(tender_id=tender_id, tender_version_id=new_tender_version.id)
+        tender_info = TenderInfo(
+            tender_id=tender_id, tender_version_id=new_tender_version.id
+        )
+        session.add(tender_info)
+        await session.commit()
+
+    return tender
+
+
+async def rollback_tender_version(
+    db: AsyncSession,
+    tender_id: UUID,
+    version: int,
+) -> Tender | None:
+    async with db as session:
+        stmt = select(TenderVersion).join(TenderInfo)
+        stmt = stmt.where(
+            and_(TenderInfo.tender_id == tender_id, TenderVersion.version == version)
+        )
+        source_tender_version = await session.scalar(stmt)
+        if not source_tender_version:
+            return None
+
+        stmt = select(Tender).where(Tender.id == tender_id).with_for_update()
+        tender = await session.scalar(stmt)
+
+        current_version = (await session.get(TenderVersion, tender.version_id)).version
+        new_tender_version = TenderVersion(
+            name=source_tender_version.name,
+            description=source_tender_version.description,
+            serviceType=source_tender_version.serviceType,
+            version=current_version + 1,
+        )
+        session.add(new_tender_version)
+
+        tender._version = new_tender_version
+        await session.commit()
+
+        tender_info = TenderInfo(
+            tender_id=tender_id, tender_version_id=new_tender_version.id
+        )
         session.add(tender_info)
         await session.commit()
 

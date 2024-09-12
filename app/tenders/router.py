@@ -5,11 +5,18 @@ from app.tenders.schemas import (
     EditTenderSchema,
 )
 from app.tenders.models import TenderServiceTypeEnum, TenderStatusEnum
+from app.error import ErrorResponse, ErrorResponseSchema
 from app.database import get_db
 from app.employee.crud import get_user
 from app.organization.crud import get_responsible
-from app.tenders.crud import add_tender, get_tenders_by_type, get_tenders_by_user, get_tender, update_tender
-from app.error import ErrorResponse, ErrorResponseSchema
+from app.tenders.crud import (
+    add_tender,
+    get_tenders_by_type,
+    get_tenders_by_user,
+    get_tender,
+    update_tender,
+    rollback_tender_version
+)
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -91,7 +98,9 @@ async def get_user_tenders(
         status.HTTP_404_NOT_FOUND: {"model": ErrorResponseSchema},
     },
 )
-async def get_tender_status(tender_id: UUID, username: str,  db: AsyncSession = Depends(get_db)) -> TenderStatusEnum:
+async def get_tender_status(
+    tender_id: UUID, username: str, db: AsyncSession = Depends(get_db)
+) -> TenderStatusEnum:
     pass
 
 
@@ -111,7 +120,10 @@ async def set_tender_status(
     },
 )
 async def edit_tender(
-    tender_id: UUID, username: str, tender_info: EditTenderSchema, db: AsyncSession = Depends(get_db)
+    tender_id: UUID,
+    username: str,
+    tender_info: EditTenderSchema,
+    db: AsyncSession = Depends(get_db),
 ) -> TenderSchema:
     user = await get_user(username, db)
     if not user:
@@ -123,8 +135,7 @@ async def edit_tender(
     tender = await get_tender(db, tender_id)
     if not tender:
         return ErrorResponse(
-            f"Тендера {tender_id} не существует",
-            status_code=status.HTTP_404_NOT_FOUND
+            f"Тендера {tender_id} не существует", status_code=status.HTTP_404_NOT_FOUND
         )
 
     responsible = await get_responsible(user.id, tender.organizationId, db)
@@ -137,8 +148,40 @@ async def edit_tender(
     return await update_tender(db, tender_id, **tender_info.model_dump())
 
 
-@router.put("/{tender_id}/rollback/{version}")
+@router.put(
+    "/{tender_id}/rollback/{version}",
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponseSchema},
+        status.HTTP_403_FORBIDDEN: {"model": ErrorResponseSchema},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorResponseSchema},
+    },)
 async def tender_rollback(
-    tender_id: UUID, version: TenderVersion, username: str
+    tender_id: UUID, version: TenderVersion, username: str, db: AsyncSession = Depends(get_db)
 ) -> TenderSchema:
-    pass
+    user = await get_user(username, db)
+    if not user:
+        return ErrorResponse(
+            f"Пользователя {username} не существует",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    tender = await get_tender(db, tender_id)
+    if not tender:
+        return ErrorResponse(
+            f"Тендера {tender_id} не существует", status_code=status.HTTP_404_NOT_FOUND
+        )    
+
+    responsible = await get_responsible(user.id, tender.organizationId, db)
+    if not responsible:
+        return ErrorResponse(
+            f"Пользователь {username} не является представителем организации {tender.organizationId}",
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
+    
+    tender = await rollback_tender_version(db, tender_id, version)
+    if not tender:
+        return ErrorResponse(
+            f"У тендера {tender_id} не существует версии {version}", status_code=status.HTTP_404_NOT_FOUND
+        )           
+
+    return tender
