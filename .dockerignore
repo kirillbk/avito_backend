@@ -1,7 +1,12 @@
-.idea
-*.iml
 .git/
-.gradle
-gradle
-out/
+.gitignore
+**/__pycache__
+**/*.py[cod]
+**/venv
+**/.coverage
+**/.pytest_cache
+docker-compose.yaml
+dockerfile
+.docker
+.dockerignore
 Dockerfile
