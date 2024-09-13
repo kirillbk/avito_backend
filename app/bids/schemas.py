@@ -14,13 +14,13 @@ BidFeedback = Annotated[str, Field(max_length=1000)]
 class NewBidSchema(BaseModel):
     name: str = Field(max_length=100)
     description: str = Field(max_length=500)
-    tenderId: UUID = Field(max_length=100)
+    tenderId: UUID
     authorType: BidAuthorTypeEnum
-    authorId: UUID = Field(max_length=100)
+    authorId: UUID
 
 
 class BidSchema(NewBidSchema):
-    id: UUID = Field(max_length=100)
+    id: UUID
     status: BidStatusEnum
     version: BidVersion
     createdAt: datetime
@@ -32,7 +32,7 @@ class EditBidSchema(BaseModel):
 
 
 class BidReviewSchema(BaseModel):
-    id: UUID = Field(max_length=100)
+    id: UUID
     description: str = Field(max_length=1000)
     createdAt: datetime
 
