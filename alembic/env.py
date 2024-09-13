@@ -23,7 +23,7 @@ if config.config_file_name is not None:
 from app.employee.models import Employee
 from app.organization.models import Organization
 from app.tenders.models import Tender, TenderInfo, TenderVersion
-from app.bids.models import BidVersion, Bid, BidInfo
+from app.bids.models import BidVersion, Bid, BidInfo, BidReview
 from app.database import Base
 
 target_metadata = Base.metadata
