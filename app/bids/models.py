@@ -87,3 +87,19 @@ class BidInfo(Base):
     bid_version_id: Mapped[UUID] = mapped_column(
         ForeignKey("bid_version.id", ondelete="CASCADE"), primary_key=True
     )
+
+
+class BidReview(Base):
+    __tablename__ = "bid_review"
+
+    id: Mapped[UUID] = mapped_column(
+        server_default=func.gen_random_uuid(), primary_key=True
+    )
+
+    bid_id: Mapped[UUID] = mapped_column(ForeignKey("bid.id", ondelete="CASCADE"))
+    author_id: Mapped[UUID] = mapped_column(
+        ForeignKey("employee.id", ondelete="CASCADE"), nullable=False
+    )
+
+    description: Mapped[str] = mapped_column(String(1000))
+    createdAt: Mapped[datetime] = mapped_column(server_default=func.current_timestamp())

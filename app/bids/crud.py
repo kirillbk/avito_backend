@@ -1,4 +1,4 @@
-from app.bids.models import Bid, BidInfo, BidVersion, BidStatusEnum
+from app.bids.models import Bid, BidInfo, BidVersion, BidStatusEnum, BidReview
 from app.bids.schemas import NewBidSchema, EditBidSchema
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -119,3 +119,23 @@ async def rollback_bid_version(
     await db.commit()
 
     return bid
+
+
+async def add_bid_review(
+    db: AsyncSession, bid_id: UUID, author_id: UUID, description: str
+) -> BidReview:
+    review = BidReview(bid_id=bid_id, author_id=author_id, description=description)
+    db.add(review)
+    await db.commit()
+
+    return review
+
+
+async def get_user_reviews(
+    db: AsyncSession, author_id: UUID, limit: int, offset: int
+) -> Sequence[BidReview]:
+    stmt = select(BidReview).join(Bid)
+    stmt = stmt.where(Bid.authorId == author_id)
+    stmt = stmt.limit(limit).offset(offset)
+
+    return (await db.scalars(stmt)).all()

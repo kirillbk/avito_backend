@@ -12,12 +12,15 @@ from app.error import ErrorResponse, ErrorResponseSchema
 from app.database import get_db
 from app.employee.crud import get_user, get_user_id
 from app.organization.crud import get_user_organization_id, get_responsible
-from app.tenders.crud import get_tender
+from app.tenders.crud import get_tender, update_tender_status
+from app.tenders.models import TenderStatusEnum
 from app.bids.crud import (
     add_bid,
+    add_bid_review,
     get_bids_by_user,
     get_bids_by_tender,
     get_bid,
+    get_user_reviews,
     update_bid_status,
     update_bid_version,
     rollback_bid_version,
@@ -238,17 +241,71 @@ async def bid_desiciton(
     username: str,
     db: AsyncSession = Depends(get_db),
 ) -> BidSchema:
-    pass
+    user_id = await get_user_id(db, username)
+    if not user_id:
+        return ErrorResponse(
+            f"Пользователя {username} не существует",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    bid = await get_bid(db, bid_id)
+    if not bid:
+        return ErrorResponse(
+            f"Предложения {bid_id} не существует", status_code=status.HTTP_404_NOT_FOUND
+        )
+
+    tender = await get_tender(db, bid.tenderId)
+    responsible = await get_responsible(db, user_id, tender.organizationId)
+    if not responsible:
+        return ErrorResponse(
+            f"Пользователь {username} не является ответственным для тендера по предложению {bid_id}",
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
+
+    if decision == BidDecisionEnum.APPROVED:
+        await update_tender_status(db, tender.id, TenderStatusEnum.CLOSED)
+
+    return bid
 
 
-@router.put("/{bid_id}/feedback")
+@router.put(
+    "/{bid_id}/feedback",
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponseSchema},
+        status.HTTP_403_FORBIDDEN: {"model": ErrorResponseSchema},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorResponseSchema},
+    },
+)
 async def bid_feedback(
-    bid_id: UUID,
-    feedback: BidFeedback,
+    bidId: UUID,
+    feedback: Annotated[BidFeedback, Query(alias="bidFeedback")],
     username: str,
     db: AsyncSession = Depends(get_db),
 ) -> BidSchema:
-    pass
+    user_id = await get_user_id(db, username)
+    if not user_id:
+        return ErrorResponse(
+            f"Пользователя {username} не существует",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    bid = await get_bid(db, bidId)
+    if not bid:
+        return ErrorResponse(
+            f"Предложения {bidId} не существует", status_code=status.HTTP_404_NOT_FOUND
+        )
+
+    tender = await get_tender(db, bid.tenderId)
+    responsible = await get_responsible(db, user_id, tender.organizationId)
+    if not responsible:
+        return ErrorResponse(
+            f"Пользователь {username} не является ответственным для тендера по предложению {bidId}",
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
+
+    await add_bid_review(db, bidId, user_id, feedback)
+
+    return bid
 
 
 @router.put(
@@ -299,5 +356,40 @@ async def get_reviews(
     requesterUsername: str,
     limit: int = 5,
     offset: int = 0,
+    db: AsyncSession = Depends(get_db),
 ) -> list[BidReviewSchema]:
-    pass
+    requester_id = await get_user_id(db, requesterUsername)
+    if not requester_id:
+        return ErrorResponse(
+            f"Пользователя {requesterUsername} не существует",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    author_id = await get_user_id(db, authorUsername)
+    if not author_id:
+        return ErrorResponse(
+            f"Пользователя {authorUsername} не существует",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    tender = await get_tender(db, tender_id)
+    if not tender:
+        return ErrorResponse(
+            f"Тендера {tender_id} не существует", status_code=status.HTTP_404_NOT_FOUND
+        )
+
+    responsible = await get_responsible(db, requester_id, tender.organizationId)
+    if not responsible:
+        return ErrorResponse(
+            f"Пользователь {requesterUsername} не является представителем организации для тендера {tender_id}",
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
+
+    reviews = await get_user_reviews(db, author_id, limit, offset)
+    if not reviews:
+        return ErrorResponse(
+            f"У пользователя {authorUsername} нет отзывов на предложения",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+
+    return reviews
