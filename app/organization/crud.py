@@ -6,13 +6,12 @@ from sqlalchemy import select, and_
 from uuid import UUID
 
 
-async def get_responsible(user_id: UUID, organization_id: UUID, db: AsyncSession) -> OrganizationResponsible | None:
-    stmt = select(OrganizationResponsible)
+async def get_responsible_id(db: AsyncSession, user_id: UUID, organization_id: UUID) -> UUID | None:
+    stmt = select(OrganizationResponsible.id)
     stmt = stmt.where(
         and_(
             user_id == OrganizationResponsible.user_id,
             organization_id == OrganizationResponsible.organization_id
         )
     )
-    async with db as session:
-        return await session.scalar(stmt)
+    return await db.scalar(stmt)

@@ -3,8 +3,9 @@ from app.employee.models import Employee
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from uuid import UUID
 
-async def get_user(username: str, db: AsyncSession) -> Employee | None:
-    stmt = select(Employee).where(Employee.username == username)
-    async with db as session:
-        return await session.scalar(stmt)
+
+async def get_user_id(db: AsyncSession, username: str) -> UUID | None:
+    stmt = select(Employee.id).where(Employee.username == username)
+    return await db.scalar(stmt)
