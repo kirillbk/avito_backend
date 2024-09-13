@@ -32,7 +32,9 @@ async def add_bid(db: AsyncSession, new_bid: NewBidSchema, organization_id_: UUI
 async def get_bids_by_user(
     db: AsyncSession, limit: int, offset: int, user_id: UUID
 ) -> Sequence[Bid]:
-    stmt = select(Bid).where(Bid.authorId == user_id)
+    stmt = select(Bid).join(BidVersion)
+    stmt = stmt.where(Bid.authorId == user_id)
+    stmt = stmt.order_by(BidVersion.name)
     stmt = stmt.limit(limit).offset(offset)
     stmt = stmt.options(joinedload(Bid._version))
 
@@ -42,7 +44,9 @@ async def get_bids_by_user(
 async def get_bids_by_tender(
     db: AsyncSession, limit: int, offset: int, tender_id: UUID
 ) -> Sequence[Bid]:
-    stmt = select(Bid).where(Bid.tenderId == tender_id)
+    stmt = select(Bid).join(BidVersion)
+    stmt = stmt.where(Bid.tenderId == tender_id)
+    stmt = stmt.order_by(BidVersion.name)
     stmt = stmt.limit(limit).offset(offset)
     stmt = stmt.options(joinedload(Bid._version))
 
@@ -53,7 +57,9 @@ async def get_bid(db: AsyncSession, id: UUID) -> Bid | None:
     return await db.get(Bid, id, options=[joinedload(Bid._version)])
 
 
-async def update_bid_status(db: AsyncSession, bid_id: UUID, status: BidStatusEnum) -> Bid | None:
+async def update_bid_status(
+    db: AsyncSession, bid_id: UUID, status: BidStatusEnum
+) -> Bid | None:
     bid = await db.get(Bid, bid_id, options=[joinedload(Bid._version)])
     if not bid:
         return None
@@ -63,16 +69,18 @@ async def update_bid_status(db: AsyncSession, bid_id: UUID, status: BidStatusEnu
     return bid
 
 
-async def update_bid_version(db: AsyncSession, bid_id: UUID, bid_info: EditBidSchema) -> Bid | None:
+async def update_bid_version(
+    db: AsyncSession, bid_id: UUID, bid_info: EditBidSchema
+) -> Bid | None:
     bid = await db.get(Bid, bid_id, with_for_update=True)
     if not bid:
         return None
-    
+
     prev_version = await db.get(BidVersion, bid.version_id)
     new_version = BidVersion(
         name=bid_info.name if bid_info.name else prev_version.name,
         description=bid_info.description if bid_info.description else prev_version.name,
-        version=prev_version.version + 1
+        version=prev_version.version + 1,
     )
     bid._version = new_version
     await db.commit()
@@ -90,20 +98,18 @@ async def rollback_bid_version(
     version: int,
 ) -> Bid | None:
     stmt = select(BidVersion).join(BidInfo)
-    stmt = stmt.where(
-        and_(BidInfo.bid_id == bid_id, BidVersion.version == version)
-    )
+    stmt = stmt.where(and_(BidInfo.bid_id == bid_id, BidVersion.version == version))
     target_bid_version = await db.scalar(stmt)
     if not target_bid_version:
         return None
-    
+
     bid = await db.get(Bid, bid_id, with_for_update=True)
     stmt = select(BidVersion.version).where(BidVersion.id == bid.version_id)
     now_version = await db.scalar(stmt)
     new_bid_version = BidVersion(
         name=target_bid_version.name,
         description=target_bid_version.description,
-        version=now_version + 1
+        version=now_version + 1,
     )
     bid._version = new_bid_version
     await db.commit()

@@ -44,10 +44,12 @@ async def get_tenders_by_type(
     offset: int,
     service_type: TenderServiceTypeEnum | None = None,
 ) -> Sequence[Tender]:
-    stmt = select(Tender).join(TenderVersion).options(joinedload(Tender._version))
+    stmt = select(Tender).join(TenderVersion)
     if service_type:
         stmt = stmt.where(TenderVersion.serviceType == service_type)
+    stmt = stmt.order_by(TenderVersion.name)
     stmt = stmt.limit(limit).offset(offset)
+    stmt = stmt.options(joinedload(Tender._version))
 
     return (await db.scalars(stmt)).all()
 
@@ -55,12 +57,11 @@ async def get_tenders_by_type(
 async def get_tenders_by_user(
     db: AsyncSession, limit: int, offset: int, creator_id: UUID
 ) -> Sequence[Tender]:
-    stmt = (
-        select(Tender)
-        .where(Tender.creatorId == creator_id)
-        .options(joinedload(Tender._version))
-    )
+    stmt = select(Tender).join(TenderVersion)
+    stmt = stmt.where(Tender.creatorId == creator_id)
+    stmt = stmt.order_by(TenderVersion.name)
     stmt = stmt.limit(limit).offset(offset)
+    stmt = stmt.options(joinedload(Tender._version))
 
     return (await db.scalars(stmt)).all()
 
@@ -68,7 +69,13 @@ async def get_tenders_by_user(
 async def update_tender_status(
     db: AsyncSession, tender_id: UUID, status: TenderStatusEnum
 ) -> Tender | None:
-    tender = await db.get(Tender, tender_id, options=[joinedload(Tender._version),])
+    tender = await db.get(
+        Tender,
+        tender_id,
+        options=[
+            joinedload(Tender._version),
+        ],
+    )
     if not tender:
         return None
     tender.status = status
