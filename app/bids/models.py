@@ -47,6 +47,10 @@ class Bid(Base):
     authorId: Mapped[UUID] = mapped_column(
         ForeignKey("employee.id", ondelete="CASCADE"), nullable=False
     )
+    organization_id: Mapped[UUID] = mapped_column(
+        ForeignKey("organization.id", ondelete="CASCADE"), nullable=False
+    )
+
     version_id: Mapped[UUID] = mapped_column(
         ForeignKey("bid_version.id", ondelete="CASCADE"), nullable=False
     )

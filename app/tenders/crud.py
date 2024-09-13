@@ -71,14 +71,11 @@ async def get_tenders_by_user(
 async def update_tender_status(
     db: AsyncSession, tender_id: UUID, status: TenderStatusEnum
 ) -> Tender | None:
-    stmt = select(Tender).where(Tender.id == tender_id).with_for_update()
-    tender = await db.scalar(stmt)
+    tender = await db.get(Tender, tender_id, options=[joinedload(Tender._version),])
     if not tender:
         return None
-
     tender.status = status
     await db.commit()
-    tender._version = await db.get(TenderVersion, tender.version_id)
 
     return tender
 

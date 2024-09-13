@@ -11,6 +11,7 @@ from app.employee.crud import get_user_id
 from app.organization.crud import get_responsible_id
 from app.tenders.crud import (
     add_tender,
+    get_tender,
     get_tenders_by_type,
     get_tenders_by_user,
     get_tender_status,
@@ -95,19 +96,35 @@ async def get_user_tenders(
 @router.get(
     "/{tender_id}/status",
     responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponseSchema},
+        status.HTTP_403_FORBIDDEN: {"model": ErrorResponseSchema},
         status.HTTP_404_NOT_FOUND: {"model": ErrorResponseSchema},
     },
 )
 async def tender_status(
-    tender_id: UUID, username: str | None = None, db: AsyncSession = Depends(get_db)
+    tender_id: UUID, username: str, db: AsyncSession = Depends(get_db)
 ) -> TenderStatusEnum:
-    tender_status = await get_tender_status(db, tender_id)
-    if not tender_status:
+    user_id = await get_user_id(db, username)
+    if not user_id:
+        return ErrorResponse(
+            f"Пользователя {username} не существует",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    tender = await get_tender(db, tender_id)
+    if not tender:
         return ErrorResponse(
             f"Тендера {tender_id} не существует", status_code=status.HTTP_404_NOT_FOUND
         )
 
-    return tender_status
+    responsible_id = await get_responsible_id(db, user_id, tender.organizationId)
+    if not responsible_id and user_id != tender.creatorId:
+        return ErrorResponse(
+            f"Пользователь {username} не является представителем организации {tender}",
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
+    
+    return await get_tender_status(db, tender_id)
 
 
 @router.put(

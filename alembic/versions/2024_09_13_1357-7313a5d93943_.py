@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 14bf1e8badcb
+Revision ID: 7313a5d93943
 Revises: 
-Create Date: 2024-09-13 05:46:22.454828
+Create Date: 2024-09-13 13:57:14.341447
 
 """
 from app.tenders.models import TenderStatusEnum, TenderServiceTypeEnum
@@ -15,7 +15,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '14bf1e8badcb'
+revision: str = '7313a5d93943'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -56,11 +56,13 @@ def upgrade() -> None:
     sa.Column('id', sa.Uuid(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('tenderId', sa.Uuid(), nullable=False),
     sa.Column('authorId', sa.Uuid(), nullable=False),
+    sa.Column('organization_id', sa.Uuid(), nullable=False),
     sa.Column('version_id', sa.Uuid(), nullable=False),
     sa.Column('status', sa.Enum('CREATED', 'PUBLISHED', 'CANCELED', name='bidstatusenum'), nullable=False),
     sa.Column('authorType', sa.Enum('ORGANIZATION', 'USER', name='bidauthortypeenum'), nullable=False),
     sa.Column('createdAt', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.ForeignKeyConstraint(['authorId'], ['employee.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['organization_id'], ['organization.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['tenderId'], ['tender.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['version_id'], ['bid_version.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
