@@ -11,7 +11,7 @@ from app.bids.models import BidStatusEnum
 from app.error import ErrorResponse, ErrorResponseSchema
 from app.database import get_db
 from app.employee.crud import get_user, get_user_id
-from app.organization.crud import get_user_organization_id, get_responsible_id
+from app.organization.crud import get_user_organization_id, get_responsible
 from app.tenders.crud import get_tender
 from app.bids.crud import (
     add_bid,
@@ -19,6 +19,8 @@ from app.bids.crud import (
     get_bids_by_tender,
     get_bid,
     update_bid_status,
+    update_bid_version,
+    rollback_bid_version
 )
 
 from fastapi import APIRouter, Depends, status, Query
@@ -111,8 +113,8 @@ async def list_tender_bids(
             status_code=status.HTTP_404_NOT_FOUND,
         )
 
-    responsible_id = await get_responsible_id(db, user_id, tender.organizationId)
-    if not responsible_id and tender.creatorId != user_id:
+    responsible = await get_responsible(db, user_id, tender.organizationId)
+    if not responsible and tender.creatorId != user_id:
         return ErrorResponse(
             f"Пользователь {username} не является создателем/представителем организации для тендера {tender_id}",
             status_code=status.HTTP_403_FORBIDDEN,
@@ -145,8 +147,8 @@ async def get_bid_status(
             f"Предложения {bid_id} не существует", status_code=status.HTTP_404_NOT_FOUND
         )
 
-    responsible_id = await get_responsible_id(db, user_id, bid.organization_id)
-    if not responsible_id and bid.authorId != user_id:
+    responsible = await get_responsible(db, user_id, bid.organization_id)
+    if not responsible and bid.authorId != user_id:
         return ErrorResponse(
             f"Пользователь {username} не является создателем/представителем организации для предложения {bid_id}",
             status_code=status.HTTP_403_FORBIDDEN,
@@ -182,8 +184,8 @@ async def set_bid_status(
             f"Предложения {bid_id} не существует", status_code=status.HTTP_404_NOT_FOUND
         )
 
-    responsible_id = await get_responsible_id(db, user_id, bid.organization_id)
-    if not responsible_id and bid.authorId != user_id:
+    responsible = await get_responsible(db, user_id, bid.organization_id)
+    if not responsible and bid.authorId != user_id:
         return ErrorResponse(
             f"Пользователь {username} не является создателем/представителем организации для предложения {bid_id}",
             status_code=status.HTTP_403_FORBIDDEN,
@@ -192,26 +194,87 @@ async def set_bid_status(
     return await update_bid_status(db, bid_id, bid_status)
 
 
-@router.patch("/{bid_id}/edit")
-async def edit_bid(bid_id: UUID, username: str, bid_params: EditBidSchema) -> BidSchema:
-    pass
+@router.patch(
+    "/{bid_id}/edit",
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponseSchema},
+        status.HTTP_403_FORBIDDEN: {"model": ErrorResponseSchema},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorResponseSchema},
+    },
+)
+async def edit_bid(bid_id: UUID, username: str, bid_info: EditBidSchema, db: AsyncSession = Depends(get_db)) -> BidSchema:
+    user_id = await get_user_id(db, username)
+    if not user_id:
+        return ErrorResponse(
+            f"Пользователя {username} не существует",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    bid = await get_bid(db, bid_id)
+    if not bid:
+        return ErrorResponse(
+            f"Предложения {bid_id} не существует", status_code=status.HTTP_404_NOT_FOUND
+        )
+
+    responsible = await get_responsible(db, user_id, bid.organization_id)
+    if not responsible and bid.authorId != user_id:
+        return ErrorResponse(
+            f"Пользователь {username} не является создателем/представителем организации для предложения {bid_id}",
+            status_code=status.HTTP_403_FORBIDDEN,
+    )
+
+    return await update_bid_version(db, bid_id, bid_info)
 
 
 @router.put("/{bid_id}/submit_decision")
 async def bid_desiciton(
-    bid_id: UUID, decision: BidDecisionEnum, username: str
+    bid_id: UUID, decision: BidDecisionEnum, username: str, db: AsyncSession = Depends(get_db)
 ) -> BidSchema:
     pass
 
 
 @router.put("/{bid_id}/feedback")
-async def bid_feedback(bid_id: UUID, feedback: BidFeedback, username: str) -> BidSchema:
+async def bid_feedback(bid_id: UUID, feedback: BidFeedback, username: str, db: AsyncSession = Depends(get_db)) -> BidSchema:
     pass
 
 
-@router.put("/{bid_id}/rollback/{version}")
-async def bid_rollback(bid_id: UUID, version: BidVersion, username: str) -> BidSchema:
-    pass
+@router.put(
+    "/{bid_id}/rollback/{version}",
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponseSchema},
+        status.HTTP_403_FORBIDDEN: {"model": ErrorResponseSchema},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorResponseSchema},
+    },
+)
+async def bid_rollback(bid_id: UUID, version: BidVersion, username: str, db: AsyncSession = Depends(get_db)) -> BidSchema:
+    user_id = await get_user_id(db, username)
+    if not user_id:
+        return ErrorResponse(
+            f"Пользователя {username} не существует",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    bid = await get_bid(db, bid_id)
+    if not bid:
+        return ErrorResponse(
+            f"Предложения {bid_id} не существует", status_code=status.HTTP_404_NOT_FOUND
+        )
+
+    responsible = await get_responsible(db, user_id, bid.organization_id)
+    if not responsible and bid.authorId != user_id:
+        return ErrorResponse(
+            f"Пользователь {username} не является создателем/представителем организации для предложения {bid_id}",
+            status_code=status.HTTP_403_FORBIDDEN,
+    )
+
+    bid = await rollback_bid_version(db, bid_id, version)
+    if not bid:
+        return ErrorResponse(
+            f"У предложения {bid_id} не существует версии {version}",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+
+    return bid
 
 
 @router.get("/{tender_id}/reviews")

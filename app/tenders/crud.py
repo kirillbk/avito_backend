@@ -25,9 +25,6 @@ async def add_tender(
     tender_version = TenderVersion(
         name=name, description=description, serviceType=serviceType
     )
-    db.add(tender_version)
-    await db.commit()
-
     tender = Tender(
         organizationId=organizationId, creatorId=creatorId, _version=tender_version
     )
@@ -102,9 +99,11 @@ async def update_tender_version(
     name: str | None,
     description: str | None,
     serviceType: TenderServiceTypeEnum | None,
-) -> Tender:
+) -> Tender | None:
     stmt = select(Tender).where(Tender.id == tender_id).with_for_update()
     tender = await db.scalar(stmt)
+    if not tender:
+        return None
 
     old_tender_version = await db.get(TenderVersion, tender.version_id)
     new_tender_version = TenderVersion(
@@ -113,9 +112,6 @@ async def update_tender_version(
         serviceType=serviceType if serviceType else old_tender_version.serviceType,
         version=old_tender_version.version + 1,
     )
-    db.add(new_tender_version)
-    await db.commit()
-
     tender._version = new_tender_version
     await db.commit()
 
@@ -152,9 +148,6 @@ async def rollback_tender_version(
         serviceType=source_tender_version.serviceType,
         version=current_version + 1,
     )
-    db.add(new_tender_version)
-    await db.commit()
-
     tender._version = new_tender_version
     await db.commit()
 
