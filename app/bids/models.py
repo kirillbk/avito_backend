@@ -55,7 +55,9 @@ class Bid(Base):
         ForeignKey("bid_version.id", ondelete="CASCADE"), nullable=False
     )
 
-    status: Mapped[BidStatusEnum] = mapped_column(Enum(BidStatusEnum), default=BidStatusEnum.CREATED, nullable=False)
+    status: Mapped[BidStatusEnum] = mapped_column(
+        Enum(BidStatusEnum), default=BidStatusEnum.CREATED, nullable=False
+    )
     authorType: Mapped[BidAuthorTypeEnum] = mapped_column(
         Enum(BidAuthorTypeEnum), nullable=False
     )

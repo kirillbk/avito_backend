@@ -20,7 +20,7 @@ from app.bids.crud import (
     get_bid,
     update_bid_status,
     update_bid_version,
-    rollback_bid_version
+    rollback_bid_version,
 )
 
 from fastapi import APIRouter, Depends, status, Query
@@ -202,7 +202,12 @@ async def set_bid_status(
         status.HTTP_404_NOT_FOUND: {"model": ErrorResponseSchema},
     },
 )
-async def edit_bid(bid_id: UUID, username: str, bid_info: EditBidSchema, db: AsyncSession = Depends(get_db)) -> BidSchema:
+async def edit_bid(
+    bid_id: UUID,
+    username: str,
+    bid_info: EditBidSchema,
+    db: AsyncSession = Depends(get_db),
+) -> BidSchema:
     user_id = await get_user_id(db, username)
     if not user_id:
         return ErrorResponse(
@@ -221,20 +226,28 @@ async def edit_bid(bid_id: UUID, username: str, bid_info: EditBidSchema, db: Asy
         return ErrorResponse(
             f"Пользователь {username} не является создателем/представителем организации для предложения {bid_id}",
             status_code=status.HTTP_403_FORBIDDEN,
-    )
+        )
 
     return await update_bid_version(db, bid_id, bid_info)
 
 
 @router.put("/{bid_id}/submit_decision")
 async def bid_desiciton(
-    bid_id: UUID, decision: BidDecisionEnum, username: str, db: AsyncSession = Depends(get_db)
+    bid_id: UUID,
+    decision: BidDecisionEnum,
+    username: str,
+    db: AsyncSession = Depends(get_db),
 ) -> BidSchema:
     pass
 
 
 @router.put("/{bid_id}/feedback")
-async def bid_feedback(bid_id: UUID, feedback: BidFeedback, username: str, db: AsyncSession = Depends(get_db)) -> BidSchema:
+async def bid_feedback(
+    bid_id: UUID,
+    feedback: BidFeedback,
+    username: str,
+    db: AsyncSession = Depends(get_db),
+) -> BidSchema:
     pass
 
 
@@ -246,7 +259,9 @@ async def bid_feedback(bid_id: UUID, feedback: BidFeedback, username: str, db: A
         status.HTTP_404_NOT_FOUND: {"model": ErrorResponseSchema},
     },
 )
-async def bid_rollback(bid_id: UUID, version: BidVersion, username: str, db: AsyncSession = Depends(get_db)) -> BidSchema:
+async def bid_rollback(
+    bid_id: UUID, version: BidVersion, username: str, db: AsyncSession = Depends(get_db)
+) -> BidSchema:
     user_id = await get_user_id(db, username)
     if not user_id:
         return ErrorResponse(
@@ -265,7 +280,7 @@ async def bid_rollback(bid_id: UUID, version: BidVersion, username: str, db: Asy
         return ErrorResponse(
             f"Пользователь {username} не является создателем/представителем организации для предложения {bid_id}",
             status_code=status.HTTP_403_FORBIDDEN,
-    )
+        )
 
     bid = await rollback_bid_version(db, bid_id, version)
     if not bid:

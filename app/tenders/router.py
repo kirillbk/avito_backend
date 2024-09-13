@@ -123,7 +123,7 @@ async def tender_status(
             f"Пользователь {username} не является представителем организации {tender}",
             status_code=status.HTTP_403_FORBIDDEN,
         )
-    
+
     return await get_tender_status(db, tender_id)
 
 

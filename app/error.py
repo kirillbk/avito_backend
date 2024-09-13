@@ -1,8 +1,6 @@
-from typing import Any, Mapping
 from fastapi import Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from starlette.background import BackgroundTask
 from starlette.exceptions import HTTPException
 from pydantic import BaseModel, Field
 
@@ -24,5 +22,7 @@ async def system_exception_handler(request: Request, exc: Exception) -> JSONResp
     return ErrorResponse("Internal Server Error", status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-async def request_error_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+async def request_error_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
     return ErrorResponse(str(exc), status.HTTP_400_BAD_REQUEST)

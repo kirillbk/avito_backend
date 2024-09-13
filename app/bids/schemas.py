@@ -11,6 +11,7 @@ from enum import Enum
 BidVersion = Annotated[int, Field(ge=1)]
 BidFeedback = Annotated[str, Field(max_length=1000)]
 
+
 class NewBidSchema(BaseModel):
     name: str = Field(max_length=100)
     description: str = Field(max_length=500)

@@ -1,4 +1,4 @@
-from app.organization.models import Organization, OrganizationResponsible
+from app.organization.models import OrganizationResponsible
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
@@ -25,7 +25,9 @@ async def get_user_organization_id(db: AsyncSession, user_id: UUID) -> UUID | No
     return await db.scalar(stmt)
 
 
-async def get_responsible(db: AsyncSession, user_id: UUID, organization_id: UUID) -> OrganizationResponsible | None:
+async def get_responsible(
+    db: AsyncSession, user_id: UUID, organization_id: UUID
+) -> OrganizationResponsible | None:
     stmt = select(OrganizationResponsible)
     stmt = stmt.where(
         and_(
