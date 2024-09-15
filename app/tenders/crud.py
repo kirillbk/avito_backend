@@ -11,7 +11,7 @@ from sqlalchemy import select, and_
 from sqlalchemy.orm import joinedload
 
 from uuid import UUID
-from typing import Sequence
+from collections.abc import Sequence
 
 
 async def add_tender(

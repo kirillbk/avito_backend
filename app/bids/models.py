@@ -6,16 +6,16 @@ from sqlalchemy import String, Enum, ForeignKey, CheckConstraint
 
 from uuid import UUID
 from datetime import datetime
-import enum
+from enum import StrEnum
 
 
-class BidStatusEnum(str, enum.Enum):
+class BidStatusEnum(StrEnum):
     CREATED = "Created"
     PUBLISHED = "Published"
     CANCELED = "Canceled"
 
 
-class BidAuthorTypeEnum(str, enum.Enum):
+class BidAuthorTypeEnum(StrEnum):
     ORGANIZATION = "Organization"
     USER = "User"
 
@@ -56,7 +56,7 @@ class Bid(Base):
     )
 
     status: Mapped[BidStatusEnum] = mapped_column(
-        Enum(BidStatusEnum), default=BidStatusEnum.CREATED, nullable=False
+        Enum(BidStatusEnum), server_default=BidStatusEnum.CREATED.name, nullable=False
     )
     authorType: Mapped[BidAuthorTypeEnum] = mapped_column(
         Enum(BidAuthorTypeEnum), nullable=False

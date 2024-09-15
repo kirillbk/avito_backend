@@ -6,7 +6,7 @@ from sqlalchemy import select, and_
 from sqlalchemy.orm import joinedload
 
 from uuid import UUID
-from typing import Sequence
+from collections.abc import Sequence
 
 
 async def add_bid(db: AsyncSession, new_bid: NewBidSchema, organization_id_: UUID):

@@ -6,16 +6,16 @@ from sqlalchemy import String, Enum, ForeignKey, CheckConstraint
 
 from uuid import UUID
 from datetime import datetime
-import enum
+from enum import StrEnum
 
 
-class TenderServiceTypeEnum(str, enum.Enum):
+class TenderServiceTypeEnum(StrEnum):
     CONSTRUCTION = "Construction"
     DELIVERY = "Delivery"
     MANUFACTURE = "Manufacture"
 
 
-class TenderStatusEnum(str, enum.Enum):
+class TenderStatusEnum(StrEnum):
     CREATED = "Created"
     PUBLISHED = "Published"
     CLOSED = "Closed"
@@ -56,7 +56,7 @@ class Tender(Base):
     )
 
     status: Mapped[TenderStatusEnum] = mapped_column(
-        Enum(TenderStatusEnum), default=TenderStatusEnum.CREATED
+        Enum(TenderStatusEnum), server_default=TenderStatusEnum.CREATED.name
     )
     createdAt: Mapped[datetime] = mapped_column(server_default=func.current_timestamp())
 
