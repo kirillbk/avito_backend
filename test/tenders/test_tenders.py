@@ -1,4 +1,5 @@
 from httpx import AsyncClient
+from fastapi import status
 import pytest
 
 
@@ -15,6 +16,7 @@ class TestTenders:
         await aclient.post("api/tenders/new", json=new_tender)
         response = await aclient.get("api/tenders")
         
+        assert response.status_code == status.HTTP_200_OK
         tenders = response.json()
         assert len(tenders) == 3
         assert all(tenders[i]["name"] <= tenders[i + 1]["name"] for i in range(len(tenders) - 1))
@@ -35,8 +37,9 @@ class TestTenders:
         await aclient.post("api/tenders/new", json=new_tender)
         new_tender["name"] = "bbb"
         new_tender["serviceType"] = "Delivery"
-        await aclient.post("api/tenders/new", json=new_tender)
+        response = await aclient.post("api/tenders/new", json=new_tender)
         
+        assert response.status_code == status.HTTP_200_OK
         response = await aclient.get("api/tenders", params={"service_type": "Construction"})
         tenders = response.json()
         assert len(tenders) == 2

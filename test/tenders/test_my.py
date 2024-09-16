@@ -24,5 +24,6 @@ class TestMy:
         await aclient.post("api/tenders/new", json=new_tender)
         response = await aclient.get("api/tenders/my", params={"username": "user1"})
 
+        assert response.status_code == status.HTTP_200_OK
         tenders = response.json()
         assert len(tenders) == 2
