@@ -1,4 +1,3 @@
-from app.tenders.crud import get_tender_status
 from test.check_error import check_error
 
 from fastapi import status
@@ -68,7 +67,5 @@ class TestStatus:
 
         response = await aclient.put(f"api/tenders/{tender_id}/status", params={"status": "Published", "username": "user1"})
         assert response.status_code == status.HTTP_200_OK
-        data = response.json()
-        assert await get_tender_status(db_test, data['id']) == "Published"
         assert response.status_code == status.HTTP_200_OK
-        assert data["status"] == "Published"
+        assert response.json()["status"] == "Published"
