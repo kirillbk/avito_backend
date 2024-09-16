@@ -1,5 +1,3 @@
-from app.tenders.crud import add_tender
-
 from httpx import AsyncClient
 import pytest
 

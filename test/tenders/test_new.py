@@ -5,7 +5,7 @@ from fastapi import status
 import pytest
 
 
-class TestNewTender:
+class TestNew:
     @pytest.mark.anyio
     async def test_no_user(self, new_tender: dict[str, str], aclient: AsyncClient):
         new_tender["creatorUsername"] = "no_user"
