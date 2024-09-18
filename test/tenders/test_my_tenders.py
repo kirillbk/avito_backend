@@ -13,7 +13,7 @@ class TestMy:
 
     @pytest.mark.anyio
     async def test_get(self, new_tender: dict[str, str], aclient: AsyncClient):
-        new_tender[ "organizationId"] = "550e8400-e29b-41d4-a716-446655440020"
+        new_tender["organizationId"] = "550e8400-e29b-41d4-a716-446655440020"
         new_tender["creatorUsername"] = "user1"
         new_tender["name"] = "aaa"
         await aclient.post("api/tenders/new", json=new_tender)
@@ -28,6 +28,8 @@ class TestMy:
         response = await aclient.get("api/tenders/my", params={"username": "user1"})
         assert response.status_code == status.HTTP_200_OK
         tenders = response.json()
-        assert all(tenders[i]["name"] <= tenders[i + 1]["name"] for i in range(len(tenders) - 1))
+        assert all(
+            tenders[i]["name"] <= tenders[i + 1]["name"]
+            for i in range(len(tenders) - 1)
+        )
         assert len(tenders) == 3
-

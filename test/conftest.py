@@ -53,3 +53,14 @@ def new_tender() -> dict[str, str]:
         "organizationId": "550e8400-e29b-41d4-a716-446655440000",
         "creatorUsername": "user",
     }
+
+
+@pytest.fixture
+def new_bid() -> dict[str, str]:
+    return {
+        "name": "new bid",
+        "description": "new bid descrition",
+        "tenderId": "550e8400-e29b-41d4-a716-446655440000",
+        "authorType": "Organization",
+        "authorId": "550e8400-e29b-41d4-a716-446655440000",
+    }

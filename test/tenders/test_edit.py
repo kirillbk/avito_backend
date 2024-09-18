@@ -18,7 +18,7 @@ class TestEdit:
             },
         )
         check_error(response, status.HTTP_401_UNAUTHORIZED)
-   
+
     @pytest.mark.anyio
     async def test_no_tender(self, aclient: AsyncClient):
         response = await aclient.patch(
@@ -28,7 +28,7 @@ class TestEdit:
                 "name": "string",
                 "description": "string",
                 "serviceType": "Construction",
-            }
+            },
         )
         check_error(response, status.HTTP_404_NOT_FOUND)
 
@@ -49,7 +49,7 @@ class TestEdit:
             },
         )
         check_error(response, status.HTTP_403_FORBIDDEN)
-   
+
     @pytest.mark.anyio
     async def test_edit(self, new_tender: dict[str, str], aclient: AsyncClient):
         new_tender["creatorUsername"] = "user1"
@@ -64,7 +64,7 @@ class TestEdit:
         response = await aclient.patch(
             f"api/tenders/{tender_id}/edit",
             params={"username": "user1"},
-            json=new_version
+            json=new_version,
         )
 
         assert response.status_code == status.HTTP_200_OK
