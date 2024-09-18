@@ -31,7 +31,9 @@ class TestBidEdit:
         check_error(response, status.HTTP_404_NOT_FOUND)
 
     @pytest.mark.anyio
-    async def test_user_is_not_responsible(self, new_tender: dict[str, str], new_bid: dict[str, str], aclient: AsyncClient):
+    async def test_user_is_not_responsible(
+        self, new_tender: dict[str, str], new_bid: dict[str, str], aclient: AsyncClient
+    ):
         new_tender["creatorUsername"] = "user1"
         new_tender["organizationId"] = "550e8400-e29b-41d4-a716-446655440020"
         response = await aclient.post("api/tenders/new", json=new_tender)
@@ -53,7 +55,9 @@ class TestBidEdit:
         check_error(response, status.HTTP_403_FORBIDDEN)
 
     @pytest.mark.anyio
-    async def test_edit(self, new_tender: dict[str, str], new_bid: dict[str, str], aclient: AsyncClient):
+    async def test_edit(
+        self, new_tender: dict[str, str], new_bid: dict[str, str], aclient: AsyncClient
+    ):
         new_tender["creatorUsername"] = "user1"
         new_tender["organizationId"] = "550e8400-e29b-41d4-a716-446655440020"
         response = await aclient.post("api/tenders/new", json=new_tender)
@@ -67,7 +71,9 @@ class TestBidEdit:
         response = await aclient.patch(
             f"api/bids/{bid_id}/edit",
             params={"username": "user1"},
-            json={"description": "new_description",},
+            json={
+                "description": "new_description",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK

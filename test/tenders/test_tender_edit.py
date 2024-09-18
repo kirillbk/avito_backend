@@ -33,7 +33,9 @@ class TestTenderEdit:
         check_error(response, status.HTTP_404_NOT_FOUND)
 
     @pytest.mark.anyio
-    async def test_user_is_not_responsible(self, new_tender: dict[str, str], aclient: AsyncClient):
+    async def test_user_is_not_responsible(
+        self, new_tender: dict[str, str], aclient: AsyncClient
+    ):
         new_tender["creatorUsername"] = "user1"
         new_tender["organizationId"] = "550e8400-e29b-41d4-a716-446655440020"
         response = await aclient.post("api/tenders/new", json=new_tender)
