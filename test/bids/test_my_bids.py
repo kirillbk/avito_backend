@@ -5,7 +5,7 @@ from httpx import AsyncClient
 import pytest
 
 
-class TestMy:
+class TestMyBids:
     @pytest.mark.anyio
     async def test_no_user(self, aclient: AsyncClient):
         response = await aclient.get("api/bids/my", params={"username": "no_user"})
