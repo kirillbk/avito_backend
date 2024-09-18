@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-class TestStatus:
+class TestTenderStatus:
     @pytest.mark.anyio
     async def test_get_no_user(self, aclient: AsyncClient):
         response = await aclient.get(
@@ -94,6 +94,5 @@ class TestStatus:
             f"api/tenders/{tender_id}/status",
             params={"status": "Published", "username": "user1"},
         )
-        assert response.status_code == status.HTTP_200_OK
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["status"] == "Published"

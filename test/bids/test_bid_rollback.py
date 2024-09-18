@@ -15,7 +15,7 @@ class TestBidVersion:
         check_error(response, status.HTTP_401_UNAUTHORIZED)
 
     @pytest.mark.anyio
-    async def test_no_tender(self, aclient: AsyncClient):
+    async def test_no_bid(self, aclient: AsyncClient):
         response = await aclient.put(
             "api/bids/550e8400-e29b-41d4-a716-446655440000/rollback/1",
             params={"username": "user1"},
