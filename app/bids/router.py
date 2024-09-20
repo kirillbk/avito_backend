@@ -277,7 +277,7 @@ async def bid_desiciton(
     },
 )
 async def bid_feedback(
-    bidId: UUID,
+    bid_id: UUID,
     feedback: Annotated[BidFeedback, Query(alias="bidFeedback")],
     username: str,
     db: AsyncSession = Depends(get_db),
@@ -289,21 +289,21 @@ async def bid_feedback(
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
 
-    bid = await get_bid(db, bidId)
+    bid = await get_bid(db, bid_id)
     if not bid:
         return ErrorResponse(
-            f"Предложения {bidId} не существует", status_code=status.HTTP_404_NOT_FOUND
+            f"Предложения {bid_id} не существует", status_code=status.HTTP_404_NOT_FOUND
         )
 
     tender = await get_tender(db, bid.tenderId)
     responsible = await get_responsible(db, user_id, tender.organizationId)
     if not responsible:
         return ErrorResponse(
-            f"Пользователь {username} не является ответственным для тендера по предложению {bidId}",
+            f"Пользователь {username} не является ответственным для тендера по предложению {bid_id}",
             status_code=status.HTTP_403_FORBIDDEN,
         )
 
-    await add_bid_review(db, bidId, user_id, feedback)
+    await add_bid_review(db, bid_id, user_id, feedback)
 
     return bid
 
