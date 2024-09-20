@@ -5,7 +5,7 @@ from fastapi import status
 import pytest
 
 
-class TestNew:
+class TestTenderNew:
     @pytest.mark.anyio
     async def test_no_user(self, new_tender: dict[str, str], aclient: AsyncClient):
         new_tender["creatorUsername"] = "no_user"
@@ -33,5 +33,6 @@ class TestNew:
         for key, value in new_tender.items():
             value == data[key]
         assert "id" in data
+        assert "createdAt" in data
         assert data["status"] == "Created"
         assert data["version"] == 1
